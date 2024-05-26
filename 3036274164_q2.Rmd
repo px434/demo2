@@ -1,0 +1,90 @@
+---
+title: "3036274164_q2"
+author: "PENG, Xin"
+date: "2024-04-15"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(openxlsx)
+setwd("/Users/amypxx/Library/CloudStorage/OneDrive-TheUniversityofHongKong-Connect/adv stat/final exam")
+```
+
+# Q2 A
+```{r}
+library(metafor)
+q2<-read.csv("exam_question2.csv")
+head(q2)
+summary(q2)
+
+q2$se.prev <- (q2$prev.ub-q2$prev.lb)/(2*1.96)
+q2.fe <- rma(yi=prev, sei=se.prev, slab=study, method="FE", data=q2)
+q2.fe
+```
+
+# Q2 B
+```{r}
+summary(q2.fe)
+Q <- q2.fe$QE
+I2 <- (Q-(q2.fe$k-1))/Q * 100
+I2
+```
+Yes, both Cochran’s Q test: p<0.0001 and I2=97.99% indicate substantial heterogeneity.
+
+# Q2 C
+```{r}
+q2.re <- rma(yi=prev, sei=se.prev, slab=study, method="REML", 
+               data=q2)
+
+with(q2.re, c(b, ci.lb, ci.ub))
+```
+Based on a random effects model, the T2D prevalence among heavy drinkers is 17.58% (95%CI:12.87%~22.30%).
+
+# Q2 D
+```{r}
+forest(q2.re, order=year, slab=paste(study, country,year, sep=", "), refline=0,  
+       showweights=T, xlab="Prevalence, %",xlim=c(-3,3))
+text(-3,22.5,"Study",pos=4,font=0)
+text(3,22.5,"Prevalence [95% CI]",pos=2,font=0)
+```
+
+# Q2 E
+```{r}
+funnel(q2.re)
+
+## Egger’s test
+regtest(q2.re)
+```
+No obvious asymmetry can be seen from the funnel plot, and
+there was no strong evidence of asymmetry from Egger’s test.
+No evidence of publication bias.
+
+# Q2 F
+```{r}
+
+prev_high <- c("Argentina", "Brazil", "Colombia", "Mexico", "Paraguay", "Peru")
+high <- q2[q2$country%in%prev_high,]
+non_high <- q2[!q2$country %in% prev_high,]
+
+t_test <- t.test(high$prev, non_high$prev)
+print(t_test)
+
+
+q2$high <- 0
+q2$high[q2$country%in% c("Argentina", "Brazil", "Colombia", "Mexico", "Paraguay", "Peru")] <- 1
+
+q2.re.sen <- rma(yi=prev, sei=se.prev, slab=study, method="REML", data=q2, subset=(high==0))
+
+# compare the original estimate vs estimate from sensitivity analysis
+with(q2.re, c(b, ci.lb, ci.ub)) # original estimate for all regions
+
+with(q2.re.sen, c(b, ci.lb, ci.ub)) # estimates for regions excluded Latin-America
+
+```
+
+# Q2 G
+
+The estimated T2D prevalence among heavy drinkers is 17.58% (95%CI:12.87%~22.30%) based on the random effects model.
+Sensitivity analysis shows that the inclusion of Latin-American regions where T2D prevalence is higher may impact the overall estimates.
+The funnel plot showed that there was no evidence of publication bias.

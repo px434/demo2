@@ -1,0 +1,21 @@
+study,country,year,prev,prev.lb,prev.ub
+Sotelo,Argentina,2011,0.345,0.3,0.389
+Bastos,Brazil,2018,0.296,0.279,0.313
+Chhim,Cambodia,2017,0.059,0.046,0.071
+Shan,China,2018,0.076,0.053,0.1
+Zea,Colombia,2015,0.138,0.049,0.227
+Shaw,India,2016,0.153,0.1,0.207
+Januraga,Indonesia,2013,0.369,0.304,0.433
+Luzzati,Italy,2016,0.121,0.073,0.17
+Kaplan,Lebanon,2016,0.1,0.007,0.193
+Wickersham,Malaysia,2017,0.124,0.078,0.171
+Salas-Espinoza,Mexico,2017,0.22,0.139,0.301
+Van Veen,Netherlands,2010,0.188,0.096,0.281
+Altaf,Pakistan,2012,0.064,0.05,0.077
+Aguayo,Paraguay,2013,0.27,0.214,0.327
+Kojima,Peru,2017,0.337,0.239,0.435
+WHO,Philippines,2016,0.037,0.015,0.058
+Fernandez-Lopez,Spain,2018,0.088,0.062,0.114
+Chariyalersak,Thailand,2011,0.093,0.045,0.141
+Nemoto,US,2014,0.299,0.261,0.338
+Colby,Vietnam,2016,0.18,0.128,0.233

@@ -1,0 +1,158 @@
+---
+title: "3036274164_q1"
+author: "PENG, Xin"
+date: "2024-04-15"
+output: word_document
+---
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("/Users/amypxx/Library/CloudStorage/OneDrive-TheUniversityofHongKong-Connect/adv stat/final exam")
+library(openxlsx)
+library(ggplot2)
+library(survival)
+```
+
+# Q1 A
+```{r}
+q1 <- read.csv('exam_question1.csv')
+head(q1)
+summary(q1)
+
+lm1 <- glm(anxiety ~ covid + male + age + heart + comorbid, family = "binomial", data = q1)
+
+ci <- exp(confint(lm1))
+or <- exp(coef(lm1))
+
+results <- cbind(
+  Variable = rownames(ci),
+  OR = round(or,2),
+  round(ci,2)
+)
+
+knitr::kable(results, caption = "OR and 95% CI", digits = 2)
+```
+COVID-19 infections significantly increase the risk of anxiety disorder adjusting for various confounders.
+
+# Q1 B
+```{r q1b}
+psq1 <- glm(covid ~ male + age + heart + comorbid, family = "binomial", data = q1)
+
+summary(psq1)
+
+q1$ps <- predict(psq1, type = "response")
+
+p1 <- ggplot(q1, aes(x = ps, fill = as.factor(covid))) +
+  geom_histogram(alpha = 0.5, position = "identity", bins = 30) +
+  labs(title = "Distribution of Propensity Scores by COVID-19 Infection",
+       x = "Propensity Score",
+       fill = "COVID-19 Infection")
+
+p1
+
+# Exponentiate coefficients to get odds ratios
+exp(coef(psq1))
+```
+
+Female, older people, people with heart disease and people with more comorbidity are more likely to get COVID-19 infection.
+
+Common support in the range of 0.4 to 0.7.
+
+# Q1 C
+
+```{r q1c}
+
+## stratification by propensity score quintiles
+
+ps.boundary <- quantile(q1$ps, 0:5/5) 
+ps.boundary
+q1$psq <- cut(q1$ps, ps.boundary, right=F, include.lowest=T, label=1:5)
+head(q1$psq)
+head(q1)
+
+q1$covid<-as.factor(q1$covid)
+
+### age by PS strata
+ggplot(q1, aes(x=covid, y=age)) + 
+  geom_boxplot(aes(fill=covid)) + facet_grid(psq ~ ., labeller=label_both) + 
+  coord_flip()
+
+
+# sex by PS strata
+ggplot(q1, aes(x=male)) + 
+  geom_histogram(binwidth=1, fill='blue') + 
+  facet_grid(covid ~ psq, labeller=label_both)
+
+# heart disease by PS strata
+ggplot(q1, aes(x=heart)) + 
+  geom_histogram(binwidth=1, fill='blue') + 
+  facet_grid(covid ~ psq, labeller=label_both)
+
+# comorbidity by PS strata
+ggplot(q1, aes(x=comorbid)) + 
+  geom_histogram(binwidth=1, fill='blue') + 
+  facet_grid(covid ~ psq, labeller=label_both)
+
+```
+
+Patient characteristics are more balanced within each propensity score strata.
+
+
+# Q1 D
+
+Conditional Independence: This assumption presumes that all known confounders are included in the model. However, the existence of unobserved confounders cannot be completely excluded.
+Common Support: The overlap observed in the propensity score distribution between the treatment and control groups suggests that this assumption is reasonably met.
+
+# Q1 E
+
+```{r}
+mean.cp <- aggregate(anxiety~covid+psq, data=q1, 
+                     FUN=mean) # infection rates 
+count.cp <- aggregate(anxiety~covid+psq, data=q1, 
+                      FUN=length) # number of infections
+cbind(mean.cp, count.cp$anxiety)
+
+n.psq <- as.numeric(table(q1$psq))
+n.psq 
+
+covid.strata <- mean.cp$anxiety[mean.cp$covid==1]-
+                 mean.cp$anxiety[mean.cp$covid==0] 
+
+covid.est <- sum(covid.strata*n.psq)/sum(n.psq) 
+
+## Estimated overall effect
+
+round(covid.est,2) # Weighted Mean of the Stratum-specific effect
+
+var.cp <- aggregate(anxiety~covid+psq, data=q1, FUN=var)
+cbind(var.cp, count.cp$covid)
+
+covid.var <- sum((var.cp$anxiety/count.cp$anxiety)*rep(n.psq, each=2)^2)/sum(n.psq)^2 
+
+## Variance of estimated effect
+covid.var 
+
+## 95% CI
+cl<-covid.est-1.96*sqrt(covid.var)
+cu<-covid.est+1.96*sqrt(covid.var)
+
+print(paste('95%CI:',round(cl,2),",",round(cu,2)))
+```
+
+# Q1 F
+
+```{r}
+
+model_ps <- glm(anxiety ~ covid + ps, data = q1, family = "binomial")
+ci_ps <- exp(confint(model_ps))
+or_ps <- exp(coef(model_ps))
+
+results_table_ps <- cbind(
+  "OR" = exp(coef(model_ps)),
+  exp(confint(model_ps))
+)
+
+knitr::kable(results_table_ps, caption = "OR and 95% CI Using Propensity Score as a Covariate", digits = 2)
+```
+
+
